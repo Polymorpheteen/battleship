@@ -25,14 +25,15 @@ export class Gameboard {
     return Array.from({ length: size }, () => Array(size).fill(null));
   }
 
-  placeShip(startX, startY, length, direction = "horizontal") {
+  placeShip(startX, startY, length, isHorizontal = true) {
+    const ship = new Ship(length);
     const positions = [];
 
     for (let i = 0; i < length; i++) {
-      const x = direction === "horizontal" ? startX + i : startX;
-      const y = direction === "vertical" ? startY + i : startY;
+      const x = isHorizontal ? startX + i : startX;
+      const y = isHorizontal ? startY : startY + i;
 
-      if (x >= this.size || y >= this.size || this.board[x][y] !== null) {
+      if (x >= this.size || y >= this.size || this.board[y][x] !== null) {
         throw new Error("Invalid ship placement");
       }
 
@@ -60,7 +61,7 @@ export class Gameboard {
     } else {
       cell.hit = true;
       cell.ship.hit();
-      return cell.ship.isSunk() ? "Hit and sunk" : "Sunk";
+      return cell.ship.isSunk() ? "Hit and sunk" : "Hit";
     }
   }
 
@@ -89,11 +90,7 @@ export class Gameboard {
 export class Player {
   constructor(name) {
     this.name = name;
-    this.Gameboard = new Gameboard();
-  }
-
-  takeTurn(opponentBoard) {
-    throw new Error("takeTurn() must be implemented by subclass");
+    this.gameboard = new Gameboard();
   }
 }
 
@@ -102,7 +99,7 @@ export class Human extends Player {
     super(name);
   }
 
-  takeTurn(opponentBoard, x, y) {
+  attack(opponentBoard, x, y) {
     return opponentBoard.receiveAttack(x, y);
   }
 }
@@ -112,14 +109,14 @@ export class Computer extends Player {
     super(name);
     this.possibleMoves = [];
 
-    for (let x = 0; x < this.gameBoard.size; x++) {
-      for (let y = 0; y < this.gameBoard.size; y++) {
+    for (let x = 0; x < this.gameboard.size; x++) {
+      for (let y = 0; y < this.gameboard.size; y++) {
         this.possibleMoves.push([x, y]);
       }
     }
   }
 
-  takeTurn(opponentBoard) {
+  attack(opponentBoard) {
     const randomIndex = Math.floor(Math.random() * this.possibleMoves.length);
     const [x, y] = this.possibleMoves.splice(randomIndex, 1)[0];
 
